@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AcademiaLedger — Student Results & Fees Manager</title>
+  <style>
+    :root {
+      --bg-main: #f4f1ea;
+      --bg-card: #ffffff;
+      --bg-sidebar: #1b362d;
+      --text-primary: #1e2421;
+      --text-muted: #5c6862;
+      --accent-primary: #1b362d;
+      --accent-secondary: #d97724;
+      --accent-light: #e8efe9;
+      --border-color: #dcd7cc;
+      --status-paid-bg: #dcfce7;
+      --status-paid-text: #166534;
+      --status-partial-bg: #fef3c7;
+      --status-partial-text: #92400e;
+      --status-unpaid-bg: #fee2e2;
+      --status-unpaid-text: #991b1b;
+      --radius: 10px;
+      --shadow: 0 4px 14px rgba(27, 54, 45, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    /* Header */
+    header {
+      background-color: var(--bg-sidebar);
+      color: #ffffff;
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand h1 {
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+    }
+
+    .brand span {
+      color: var(--accent-secondary);
+    }
+
+    .brand p {
+      font-size: 0.85rem;
+      color: #cbd5d0;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.25rem;
+    }
+
+    /* Summary Cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      padding: 1.25rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--accent-primary);
+    }
+
+    .stat-card.orange {
+      border-left-color: var(--accent-secondary);
+    }
+
+    .stat-card h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-card .value {
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Workspace Grid */
+    .workspace {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 1.75rem;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--bg-card);
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-title {
+      font-size: 1.15rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--accent-primary);
+    }
+
+    /* Form Controls */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      color: var(--text-primary);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      background-color: #faf9f6;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      background-color: #ffffff;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.65rem 1.1rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background-color: var(--accent-primary);
+      color: #ffffff;
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    .btn-secondary {
+      background-color: var(--accent-secondary);
+      color: #ffffff;
+      font-size: 0.8rem;
+      padding: 0.4rem 0.7rem;
+    }
+
+    .btn-danger {
+      background-color: #dc2626;
+      color: #ffffff;
+      font-size: 0.8rem;
+      padding: 0.4rem 0.7rem;
+    }
+
+    /* Filter & Search Bar */
+    .controls-bar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .controls-bar input {
+      flex: 2;
+      min-width: 180px;
+    }
+
+    .controls-bar select {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    /* Responsive Table */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      padding: 0.85rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background-color: var(--accent-light);
+      color: var(--accent-primary);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tr:hover {
+      background-color: #faf9f6;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .badge-paid {
+      background-color: var(--status-paid-bg);
+      color: var(--status-paid-text);
+    }
+
+    .badge-partial {
+      background-color: var(--status-partial-bg);
+      color: var(--status-partial-text);
+    }
+
+    .badge-unpaid {
+      background-color: var(--status-unpaid-bg);
+      color: var(--status-unpaid-text);
+    }
+
+    .grade-pill {
+      font-weight: 700;
+      color: var(--accent-primary);
+    }
+
+    .actions-cell {
+      display: flex;
+      gap: 0.4rem;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--text-muted);
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 900px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      header {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <h1>Academia<span>Ledger</span></h1>
+      <p>Student Academic Results & Tuition Fee Management</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Dashboard Summary -->
+    <section class="summary-grid" id="summarySection">
+      <div class="stat-card">
+        <h3>Total Students</h3>
+        <div class="value" id="statTotalStudents">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Class Average</h3>
+        <div class="value" id="statAvgScore">0%</div>
+      </div>
+      <div class="stat-card orange">
+        <h3>Fees Collected</h3>
+        <div class="value" id="statFeesCollected">$0</div>
+      </div>
+      <div class="stat-card orange">
+        <h3>Pending Dues</h3>
+        <div class="value" id="statPendingDues">$0</div>
+      </div>
+    </section>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+      <!-- Left Panel: Add Student Record -->
+      <section class="panel">
+        <h2 class="panel-title">Add Student Record</h2>
+        <form id="studentForm">
+          <div class="form-group">
+            <label for="studentName">Full Name</label>
+            <input type="text" id="studentName" placeholder="e.g., Ayesha Khan" required />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="rollNo">Roll Number</label>
+              <input type="text" id="rollNo" placeholder="e.g., CS-104" required />
+            </div>
+            <div class="form-group">
+              <label for="department">Department</label>
+              <select id="department" required>
+                <!-- Populated dynamically via JS options array -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="marksObtained">Marks Obtained</label>
+              <input type="number" id="marksObtained" min="0" max="500" placeholder="e.g., 425" required />
+            </div>
+            <div class="form-group">
+              <label for="totalMarks">Total Marks</label>
+              <input type="number" id="totalMarks" min="1" value="500" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="totalFee">Total Fee ($)</label>
+              <input type="number" id="totalFee" min="0" placeholder="e.g., 1200" required />
+            </div>
+            <div class="form-group">
+              <label for="paidFee">Fee Paid ($)</label>
+              <input type="number" id="paidFee" min="0" placeholder="e.g., 800" required />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Save Record</button>
+        </form>
+      </section>
+
+      <!-- Right Panel: Records Table -->
+      <section class="panel">
+        <h2 class="panel-title">Student Records</h2>
+
+        <div class="controls-bar">
+          <input type="text" id="searchInput" placeholder="Search by name or roll number..." />
+          <select id="filterFeeStatus">
+            <!-- Populated dynamically via JS options array -->
+          </select>
+          <select id="filterDepartment">
+            <!-- Populated dynamically via JS options array -->
+          </select>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Roll No</th>
+                <th>Student</th>
+                <th>Result</th>
+                <th>Grade</th>
+                <th>Fee Summary</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTableBody">
+              <!-- Rows rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty-state" style="display: none;">
+          No matching student records found.
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // ==========================================
+    // 1. CONFIGURATION OPTIONS & INITIAL DATA
+    // ==========================================
+    const DEPARTMENT_OPTIONS = [
+      "Computer Science",
+      "Medical Imaging",
+      "Electrical Engineering",
+      "Business Administration",
+      "Biotechnology"
+    ];
+
+    const FEE_STATUS_OPTIONS = [
+      { value: "ALL", label: "All Fee Statuses" },
+      { value: "Paid", label: "Paid" },
+      { value: "Partial", label: "Partial" },
+      { value: "Unpaid", label: "Unpaid" }
+    ];
+
+    const STORAGE_KEY = "academia_ledger_students_v1";
+
+    // Default sample records if localStorage is empty
+    const DEFAULT_STUDENTS = [
+      {
+        id: 1,
+        name: "Zainab Tariq",
+        rollNo: "MI-201",
+        department: "Medical Imaging",
+        marksObtained: 445,
+        totalMarks: 500,
+        totalFee: 1500,
+        paidFee: 1500
+      },
+      {
+        id: 2,
+        name: "Hamza Siddiqui",
+        rollNo: "CS-108",
+        department: "Computer Science",
+        marksObtained: 365,
+        totalMarks: 500,
+        totalFee: 1500,
+        paidFee: 900
+      },
+      {
+        id: 3,
+        name: "Sara Ahmed",
+        rollNo: "BA-312",
+        department: "Business Administration",
+        marksObtained: 240,
+        totalMarks: 500,
+        totalFee: 1200,
+        paidFee: 0
+      }
+    ];
+
+    // Application State
+    let students = loadStudentsFromStorage();
+
+    // ==========================================
+    // 2. DOM ELEMENT REFERENCES
+    // ==========================================
+    const studentForm = document.getElementById("studentForm");
+    const departmentSelect = document.getElementById("department");
+    const filterDepartmentSelect = document.getElementById("filterDepartment");
+    const filterFeeStatusSelect = document.getElementById("filterFeeStatus");
+    const searchInput = document.getElementById("searchInput");
+    const recordsTableBody = document.getElementById("recordsTableBody");
+    const emptyState = document.getElementById("emptyState");
+
+    // ==========================================
+    // 3. HELPER & CALCULATION FUNCTIONS
+    // ==========================================
+    function loadStudentsFromStorage() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [...DEFAULT_STUDENTS];
+    }
+
+    function saveStudentsToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(students));
+    }
+
+    function calculatePercentage(obtained, total) {
+      if (total <= 0) return 0;
+      return ((obtained / total) * 100).toFixed(1);
+    }
+
+    function determineGrade(percentage) {
+      const score = parseFloat(percentage);
+      if (score >= 85) return "A+";
+      if (score >= 75) return "A";
+      if (score >= 65) return "B";
+      if (score >= 50) return "C";
+      return "F";
+    }
+
+    function determineFeeStatus(paid, total) {
+      if (paid >= total) return "Paid";
+      if (paid > 0) return "Partial";
+      return "Unpaid";
+    }
+
+    function populateDropdownOptions() {
+      // Populate Department dropdown in Form
+      departmentSelect.innerHTML = DEPARTMENT_OPTIONS
+        .map(dept => `<option value="${dept}">${dept}</option>`)
+        .join("");
+
+      // Populate Department filter dropdown
+      filterDepartmentSelect.innerHTML =
+        `<option value="ALL">All Departments</option>` +
+        DEPARTMENT_OPTIONS.map(dept => `<option value="${dept}">${dept}</option>`).join("");
+
+      // Populate Fee Status filter dropdown
+      filterFeeStatusSelect.innerHTML = FEE_STATUS_OPTIONS
+        .map(opt => `<option value="${opt.value}">${opt.label}</option>`)
+        .join("");
+    }
+
+    // ==========================================
+    // 4. CORE CRUD & UI RENDER FUNCTIONS
+    // ==========================================
+    function updateDashboardStats() {
+      const totalStudents = students.length;
+
+      const avgPercentage = totalStudents === 0
+        ? 0
+        : (students.reduce((sum, s) => sum + parseFloat(calculatePercentage(s.marksObtained, s.totalMarks)), 0) / totalStudents).toFixed(1);
+
+      const totalCollected = students.reduce((sum, s) => sum + s.paidFee, 0);
+      const totalPending = students.reduce((sum, s) => sum + Math.max(0, s.totalFee - s.paidFee), 0);
+
+      document.getElementById("statTotalStudents").textContent = totalStudents;
+      document.getElementById("statAvgScore").textContent = `${avgPercentage}%`;
+      document.getElementById("statFeesCollected").textContent = `$${totalCollected.toLocaleString()}`;
+      document.getElementById("statPendingDues").textContent = `$${totalPending.toLocaleString()}`;
+    }
+
+    function getFilteredStudents() {
+      const query = searchInput.value.trim().toLowerCase();
+      const statusFilter = filterFeeStatusSelect.value;
+      const deptFilter = filterDepartmentSelect.value;
+
+      return students.filter(student => {
+        const matchesQuery =
+          student.name.toLowerCase().includes(query) ||
+          student.rollNo.toLowerCase().includes(query);
+
+        const currentStatus = determineFeeStatus(student.paidFee, student.totalFee);
+        const matchesStatus = statusFilter === "ALL" || currentStatus === statusFilter;
+        const matchesDept = deptFilter === "ALL" || student.department === deptFilter;
+
+        return matchesQuery && matchesStatus && matchesDept;
+      });
+    }
+
+    function renderTable() {
+      const filteredList = getFilteredStudents();
+
+      if (filteredList.length === 0) {
+        recordsTableBody.innerHTML = "";
+        emptyState.style.display = "block";
+        return;
+      }
+
+      emptyState.style.display = "none";
+
+      recordsTableBody.innerHTML = filteredList
+        .map(student => {
+          const percentage = calculatePercentage(student.marksObtained, student.totalMarks);
+          const grade = determineGrade(percentage);
+          const feeStatus = determineFeeStatus(student.paidFee, student.totalFee);
+          const dueAmount = Math.max(0, student.totalFee - student.paidFee);
+          const badgeClass = `badge-${feeStatus.toLowerCase()}`;
+
+          return `
+            <tr>
+              <td><strong>${student.rollNo}</strong></td>
+              <td>
+                <div>${student.name}</div>
+                <small style="color: var(--text-muted);">${student.department}</small>
+              </td>
+              <td>${student.marksObtained}/${student.totalMarks} (${percentage}%)</td>
+              <td><span class="grade-pill">${grade}</span></td>
+              <td>
+                <div>Paid: $${student.paidFee} / $${student.totalFee}</div>
+                ${dueAmount > 0 ? `<small style="color: #991b1b;">Due: $${dueAmount}</small>` : ""}
+              </td>
+              <td><span class="badge ${badgeClass}">${feeStatus}</span></td>
+              <td class="actions-cell">
+                ${dueAmount > 0 ? `<button class="btn btn-secondary" onclick="recordFeePayment(${student.id})">+ Pay</button>` : ""}
+                <button class="btn btn-danger" onclick="deleteStudent(${student.id})">Delete</button>
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
+    }
+
+    function refreshApp() {
+      saveStudentsToStorage();
+      updateDashboardStats();
+      renderTable();
+    }
+
+    // ==========================================
+    // 5. EVENT HANDLERS & USER ACTIONS
+    // ==========================================
+    function handleAddStudent(event) {
+      event.preventDefault();
+
+      const name = document.getElementById("studentName").value.trim();
+      const rollNo = document.getElementById("rollNo").value.trim().toUpperCase();
+      const department = departmentSelect.value;
+      const marksObtained = parseFloat(document.getElementById("marksObtained").value);
+      const totalMarks = parseFloat(document.getElementById("totalMarks").value);
+      const totalFee = parseFloat(document.getElementById("totalFee").value);
+      const paidFee = parseFloat(document.getElementById("paidFee").value);
+
+      if (marksObtained > totalMarks) {
+        alert("Marks obtained cannot exceed total marks.");
+        return;
+      }
+
+      if (paidFee > totalFee) {
+        alert("Paid fee cannot exceed total fee.");
+        return;
+      }
+
+      const duplicateRoll = students.some(s => s.rollNo.toLowerCase() === rollNo.toLowerCase());
+      if (duplicateRoll) {
+        alert("A student with this Roll Number already exists.");
+        return;
+      }
+
+      const newStudent = {
+        id: Date.now(),
+        name,
+        rollNo,
+        department,
+        marksObtained,
+        totalMarks,
+        totalFee,
+        paidFee
+      };
+
+      students.unshift(newStudent);
+      studentForm.reset();
+      refreshApp();
+    }
+
+    function recordFeePayment(studentId) {
+      const student = students.find(s => s.id === studentId);
+      if (!student) return;
+
+      const remaining = student.totalFee - student.paidFee;
+      const input = prompt(`Enter payment amount for ${student.name} (Remaining Due: $${remaining}):`, remaining);
+
+      if (input === null) return; // User cancelled
+
+      const payment = parseFloat(input);
+      if (isNaN(payment) || payment <= 0 || payment > remaining) {
+        alert(`Please enter a valid amount between $1 and $${remaining}.`);
+        return;
+      }
+
+      student.paidFee += payment;
+      refreshApp();
+    }
+
+    function deleteStudent(studentId) {
+      const confirmed = confirm("Are you sure you want to delete this student record?");
+      if (!confirmed) return;
+
+      students = students.filter(s => s.id !== studentId);
+      refreshApp();
+    }
+
+    // ==========================================
+    // 6. INITIALIZATION
+    // ==========================================
+    function init() {
+      populateDropdownOptions();
+      studentForm.addEventListener("submit", handleAddStudent);
+      searchInput.addEventListener("input", renderTable);
+      filterFeeStatusSelect.addEventListener("change", renderTable);
+      filterDepartmentSelect.addEventListener("change", renderTable);
+      refreshApp();
+    }
+
+    init();
+  </script>
+</body>
+</html>
